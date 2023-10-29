@@ -1,0 +1,128 @@
+# Anastasia Davis, Srivalli Kakumani, and Jessica Pinto
+# CS 2640.01
+# October 27, 2023
+# Program 1: Getting Familiar with Assembly
+
+.data
+prompt1: .asciiz "Please enter the first integer: "
+prompt2: .asciiz "Please enter the second integer: "
+outputValues: .asciiz "The two values are: "
+separator: .asciiz " and "
+addition: .asciiz "\nThe sum of the two integers is: "
+subtraction: .asciiz "\nThe difference of the two integers is: "
+multiplication: .asciiz "\nThe product of the two integers is: "
+division: .asciiz "\nThe division of the two integers is: "
+and1: .asciiz " and the remainder is "
+zeroMessage: .asciiz "\nResult is undefined, cannot divide by zero."
+equal: .asciiz "\nUser inputs are the same."
+noEqual: .asciiz "\nUser inputs are different."
+
+.text
+main:
+    # Get and store the first integer from the user.
+    li $v0, 4
+    la $a0, prompt1
+    syscall
+    li $v0, 5
+    syscall
+    move $s0, $v0
+    
+    # Get and store the second integer from the user.
+    li $v0, 4
+    la $a0, prompt2
+    syscall
+    li $v0, 5
+    syscall
+    move $s1, $v0
+    
+    # Output the two integer values to the user.
+    li $v0, 4
+    la $a0, outputValues
+    syscall
+    li $v0, 1
+    move $a0, $s0
+    syscall
+    li $v0, 4
+    la $a0, separator
+    syscall
+    li $v0, 1
+    move $a0, $s1
+    syscall
+    
+    # Add the numbers in $s0 and $s1.
+    li $v0, 4
+    la $a0, addition
+    syscall
+    add $s2, $s0, $s1
+    li $v0, 1
+    move $a0, $s2
+    syscall
+    
+    # Subtract the numbers in $s0 and $s1.
+    li $v0, 4
+    la $a0, subtraction
+    syscall
+    sub $s3, $s0, $s1
+    li $v0, 1
+    move $a0, $s3
+    syscall
+    
+    # Multiply the numbers in $s0 and $s1.
+    li $v0, 4
+    la $a0, multiplication
+    syscall
+    mul $s4, $s0, $s1
+    li $v0, 1
+    move $a0, $s4
+    syscall
+    
+    # Divide the number in $s0 by the number in $s1.
+    beq $s1, 0 divideByZero	# Check if the divisor is 0.
+    li $v0, 4
+    la $a0, division
+    syscall
+    div $s0, $s1  # Perform division on $s0 and $s1.
+    mflo $s5      # Move the quotient from LO to $s5.
+    mfhi $s6      # Move the remainder from HI to $s6.
+
+    # Display the quotient.
+    li $v0, 1
+    move $a0, $s5
+    syscall
+
+    # Display the remainder.
+    li $v0, 4
+    la $a0, and1
+    syscall
+    li $v0, 1
+    move $a0, $s6
+    syscall
+
+comparison:
+    # Compare the user inputs.
+    li $v0, 4
+    beq $s0, $s1, exactlyEqual  # They are equal.
+    j notEqual
+
+divideByZero:
+    # Output that the user attempted to divide by zero and jump to comparison.
+    li $v0, 4
+    la $a0, zeroMessage
+    syscall
+    j comparison
+
+exactlyEqual:
+    # If $s0 and $s1 are exactly equal, print out the equal message.
+    la $a0, equal
+    syscall 
+    j exit
+    
+notEqual:
+    # If $s0 and $s1 are not equal, print out the noEqual message.
+    la $a0, noEqual
+    syscall
+    j exit
+
+exit:
+    li $v0, 10
+    syscall
