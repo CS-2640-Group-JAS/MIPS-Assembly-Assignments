@@ -1,0 +1,23 @@
+# Anastasia Davis, Srivalli Kakumani, Jessica Pinto
+# CS 2640.01
+# October 30, 2023
+# Program 2: Practice with Conditionals and Loops
+.data
+menuPrompt: .asciiz "~~~~~~~~~~~~~~~ MAIN MENU ~~~~~~~~~~~~~~~\n(1)Get Letter Grade\n(2)Exit Program\n\nEnter '1' or '2' for your selection: "
+line: .asciiz "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n"
+.text
+main:
+	# Display the menu	
+	li $v0, 4
+	la $a0, menuPrompt
+	syscall
+	
+	# Take input from the user
+	li $v0, 5
+	syscall
+	move $s0, $v0
+	
+	# Display a dividing line
+	li $v0, 4
+	la $a0, line
+	syscall
