@@ -5,19 +5,131 @@
 .data
 menuPrompt: .asciiz "~~~~~~~~~~~~~~~ MAIN MENU ~~~~~~~~~~~~~~~\n(1)Get Letter Grade\n(2)Exit Program\n\nEnter '1' or '2' for your selection: "
 line: .asciiz "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n"
+errorMessage: .asciiz "That input is not valid. Please try again.\n"
+scorePrompt: .asciiz "Please enter a score as an integer value: "
+gradePrompt: .asciiz "The grade is: "
+scoreAgainPrompt: .asciiz "Would you like to enter a new score?\n(Y)Yes   (N)No\n\nEnter 'Y' or 'N' for your selection: "
+exitMessage: .asciiz "\nThe program will now exit."
 .text
 main:
-	# Display the menu	
+	# Display the menu.
 	li $v0, 4
 	la $a0, menuPrompt
 	syscall
 	
-	# Take input from the user
-	li $v0, 5
+	# Take input from the user.
+	li $v0, 12
 	syscall
 	move $s0, $v0
 	
-	# Display a dividing line
+	# Evaluate user input.
+	beq $s0, '1', score
+	beq $s0, '2', exit
+	j error
+score:
+	# Display a dividing line.
 	li $v0, 4
 	la $a0, line
+	syscall
+	
+	# Display the score prompt.
+	li $v0, 4
+	la $a0, scorePrompt
+	syscall
+	
+	# Take input from the user.
+	li $v0, 5
+	syscall
+	move $s1, $v0
+	
+	# Check for error
+	blt $s1, 0, error
+	
+	# Display the grade introduction.
+	li $v0, 4
+	la $a0, gradePrompt
+	syscall
+	
+	# Evaluate user input.
+	bge $s1, 90, gradeA
+	bge $s1, 80, gradeB
+	bge $s1, 70, gradeC
+	bge $s1, 60, gradeD
+	j gradeF
+gradeA:
+	# Display a grade of A.
+	li $v0, 11
+	la $a0, 'A'
+	syscall
+	j scoreAgain
+gradeB:
+	# Display a grade of B.
+	li $v0, 11
+	la $a0, 'B'
+	syscall
+	j scoreAgain
+gradeC:
+	# Display a grade of C.
+	li $v0, 11
+	la $a0, 'C'
+	syscall
+	j scoreAgain
+gradeD:
+	# Display a grade of D.
+	li $v0, 11
+	la $a0, 'D'
+	syscall
+	j scoreAgain
+gradeF:
+	# Display a grade of F.
+	li $v0, 11
+	la $a0, 'F'
+	syscall
+	j scoreAgain
+scoreAgain:
+	# Display a dividing line.
+	li $v0, 4
+	la $a0, line
+	syscall
+	
+	#Display the prompt to score again.
+	li $v0, 4
+	la $a0, scoreAgainPrompt
+	syscall
+	
+	# Take input from the user.
+	li $v0, 12
+	syscall
+	move $s2, $v0
+	
+	# Create a newline.
+	li $v0, 11
+	li $a0, '\n'
+	syscall
+	
+	# Evaluate user input.
+	beq $s2, 'Y', score
+	beq $s2, 'N', main
+	j error
+error:
+	#  Display error message.
+	li $v0, 4
+	la $a0, errorMessage
+	syscall
+	
+	# Create a newline.
+	li $v0, 11
+	li $a0, '\n'
+	syscall
+	
+	# Return to main to display main menu
+	j main
+exit:
+	#  Display exit message.
+	li $v0, 4
+	la $a0, exitMessage
+	syscall
+	
+	# Exit the program.
+	li $v0 10
 	syscall
