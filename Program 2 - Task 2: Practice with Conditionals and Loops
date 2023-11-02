@@ -4,3 +4,22 @@
 # Program 2: Practice with Conditionals and Loops
 
 
+.data
+prompt1: .asciiz "Please enter an integer for 'x': "
+prompt2: .asciiz "Please enter an integer for 'y': "
+prompt3: .asciiz "'x' to the power of 'y' is: "
+
+.text 
+        li $v0, 4
+        la $a0, prompt1
+        syscall
+        li $v0, 5
+        syscall
+        move $s0, $v0
+        
+        li $v0, 4
+        la $a0, prompt2
+        syscall
+        li $v0, 5
+        syscall
+        move $s1, $v0
