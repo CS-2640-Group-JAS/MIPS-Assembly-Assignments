@@ -9,7 +9,8 @@ prompt1: .asciiz "Please enter an integer for 'x': "
 prompt2: .asciiz "Please enter an integer for 'y': "
 prompt3: .asciiz "'x' to the power of 'y' is: "
 
-.text 
+.text
+main:
         li $v0, 4
         la $a0, prompt1
         syscall
