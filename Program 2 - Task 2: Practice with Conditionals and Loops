@@ -23,3 +23,37 @@ prompt3: .asciiz "'x' to the power of 'y' is: "
         li $v0, 5
         syscall
         move $s1, $v0
+
+        li $v0, 4
+        la $a0, returnVal1
+        syscall 
+        li $v0, 1
+        la $a0, ($s0)
+        syscall 
+
+        li $v0, 4 
+        la $a0, returnVal2
+        syscall 
+        li $v0, 1
+        la $a0, ($s1)
+        syscall
+
+power: 
+        beq $s1, 0, pow0
+
+
+
+
+pow0: 
+       li $v0, 4 
+       la $a0, result
+       syscall 
+
+       li $v0, 1
+       la $a0, 1 
+       syscall
+
+
+exit: 
+       li $v0, 10 
+       syscall
