@@ -1,46 +1,87 @@
-# Anastasia Davis, Srivalli Kakumani, Jessica Pinto
-# CS 2640.01
+# Anastasia Davis, Srvalli Kakumani, Jessica Pinto 
+# CS2640.01 
 # October 30, 2023
-# Program 2: Practice with Conditionals and Loops
+# Program 2: Practice with Conditionals and Loops 
 
-
-.data
-prompt1: .asciiz "Please enter an integer for 'x': "
+.data 
+prompt1: .asciiz "Please enter an integer for 'x': " 
 prompt2: .asciiz "Please enter an integer for 'y': "
-prompt3: .asciiz "'x' to the power of 'y' is: "
+result: .asciiz "The result of 'x' to the power of 'y' is: "
+.text 
 
-.text
-main:
-        li $v0, 4
-        la $a0, prompt1
-        syscall
-        li $v0, 5
-        syscall
-        move $s0, $v0
-        
-        li $v0, 4
-        la $a0, prompt2
-        syscall
-        li $v0, 5
-        syscall
-        move $s1, $v0
+main: 
+	# Get the first integer from the user. 
+	li $v0, 4 
+	la $a0, prompt1 
+	syscall 
+	
+	# Store the first integer from the user. 
+	li $v0, 5 
+	syscall 
+	move $s0, $v0 
+	
+	# Get the second integer from the user. 
+	li $v0, 4 
+	la $a0, prompt2 
+	syscall
+	
+	# Store the second integer from the user. 
+	li $v0, 5 
+	syscall 
+	move $s1, $v0 
 
-
+	move $s2, $s0
+	move $t0, $s0 
+	
+	beq $s1, 0, pow0
+	bgt $s1, 0, power
+	
+	
 power: 
-        beq $s1, 0, pow0
 
+	beq $s1, 1, printResult1
+	bgt $s1, 1, loopCounter
 
+loopCounter: 
 
+	beq $s1, 1, printResult
+	mul $t0, $t0, $s2
+	subi $s1, $s1, 1
+	j loopCounter
+	
 pow0: 
-       li $v0, 4 
-       la $a0, prompt3
-       syscall 
+	li $v0, 4 
+	la $a0, result
+	syscall 
+	
+	li $v0, 1
+	la $a0, 1 
+	syscall
+	
+	j exit
+	 
+printResult1:
+	li $v0, 4
+	la $a0, result 
+	syscall 
+	
+	li $v0, 1 
+	la $a0, ($s0)
+	syscall 
+	
+	j exit 
 
-       li $v0, 1
-       la $a0, 1 
-       syscall
+printResult: 
 
-
+	li $v0, 4 
+	la $a0, result
+	syscall 
+		
+	li $v0, 1
+	la $a0, ($t0)
+	syscall
+	
+	j exit
 exit: 
-       li $v0, 10 
-       syscall
+	li $v0, 10 
+	syscall 
