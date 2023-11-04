@@ -131,5 +131,5 @@ exit:
 	syscall
 	
 	# Exit the program.
-	li $v0 10
+	li $v0, 10
 	syscall
