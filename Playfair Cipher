@@ -1,0 +1,71 @@
+# Anastasia Davis, Srivalli Kakumani, and Jessica Pinto
+# CS 2640.01
+# 15 November, 2023
+.data
+row1: .byte 'P', 'L', 'A', 'Y', 'F'
+row2: .byte 'I', 'R', 'E', 'X', 'M'
+row3: .byte 'B', 'C', 'D', 'G', 'H'
+row4: .byte 'K', 'N', 'O', 'Q', 'S'
+row5: .byte 'T', 'U', 'V', 'W', 'Z'
+
+phrase: .asciiz "`1234567890-=qwertyuiop[]\asdfghjkl;'zxcvbnm,./~!@#$%^&*()_+QWERTYUIOP{}|ASDFGHJKL:ZXCVBNM<>?"
+editedPhrase: .space 100
+.text
+main:
+	# Load the base address of phrase into $s0.
+	la $s0, phrase
+	# Load the base address of editedPhrase into $s1.
+	la $s1, editedPhrase
+	# Initialize the counter for phrase.
+	move $s2, $zero
+	# Initialize the counter for editedPhrase.
+	move $s3, $zero
+	# Initialize the previous character for editedPhrase (starts with no character).
+	move $t2, $zero
+checkString:
+	# Put the offset for phrase into $t0.
+	add $t0, $s0, $s2
+	# Load the appropriate character of phrase into $t1.
+	lb $t1, ($t0)
+	# Increment phrase counter.
+	addi $s2, $s2, 1
+	# Check for end of string.
+	beq $t1, 0, afterCheckString
+	# Check for non-letters below uppercase asciis (skip).
+	blt $t1, 65, checkString
+	# Check for lowercase character (make uppercase).
+	bgt $t1, 90, makeUpperCase
+	j addToString
+makeUpperCase:
+	# Check for non-letters below/above lowercase asciis (skip).
+	blt $t1, 97, checkString
+	bgt $t1, 122, checkString
+	subi, $t1, $t1, 32
+	j addToString
+addToString:
+	# Put the offset for editedPhrase into $t0.
+	add $t0, $s1, $s3
+	sb $t1, ($t0)
+	# Increment editedPhrase counter.
+	addi $s3, $s3, 1
+	j checkString
+afterCheckString:
+	# Reinitialize the counter for editedPhrase.
+	move $s3, $zero
+printLoop:
+	# Put the offset for editedPhrase into $t0.
+	add $t0, $s1, $s3
+	# Load the appropriate character of editedPhrase into $t1.
+	lb $t1, ($t0)
+	# Increment editedphrase counter.
+	addi $s3, $s3, 1
+	# Check for end of string.
+	beq $t1, 0, exit
+	# Else print.
+	li $v0, 11
+	la $a0, ($t1)
+	syscall
+	j printLoop
+exit:
+	li $v0, 10
+	syscall
