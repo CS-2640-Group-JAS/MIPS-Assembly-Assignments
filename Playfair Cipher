@@ -1,4 +1,4 @@
-# Anastasia Davis, Srivalli Kakumani, and Jessica Pinto
+# Anastasia Davis, Srivalli Kakumani, Jerold Manansala, and Jessica Pinto
 # CS 2640.01
 # 15 November, 2023
 .macro addToString(%char)
@@ -18,9 +18,9 @@ row3: .byte 'B', 'C', 'D', 'G', 'H'
 row4: .byte 'K', 'N', 'O', 'Q', 'S'
 row5: .byte 'T', 'U', 'V', 'W', 'Z'
 
-phrase: .asciiz "hide the gold in the tree stump"
+phrase: .asciiz "Doubling letters ... since every year rings silent."
 testPhrase: .asciiz "`1234567890-=qwertyuiop[]\asdfghjkl;'zxcvbnm,./~!@#$%^&*()_+QWERTYUIOP{}|ASDFGHJKL:ZXCVBNM<>?"
-editedPhrase: .space 100
+editedPhrase: .space 500
 
 .text
 main:
@@ -75,6 +75,7 @@ checkNumChars:
 	li $t3, 'X'
 	addToString($t3)
 afterCheckString:
+	# Add the null terminator.
 	addToString($t1)
 	# Reinitialize the counter for editedPhrase.
 	move $s3, $zero
@@ -88,7 +89,7 @@ printLoop:
 	# Increment editedphrase counter.
 	addi $s3, $s3, 1
 	# Check for end of string.
-	beq $t1, 0, exit
+	beq $t1, 0, encrypt
 	# Else print the character.
 	la $a0, ($t1)
 	syscall
@@ -100,6 +101,23 @@ printLoop:
 	li $a0, ' '
 	syscall
 	j printLoop
+encrypt: 
+	# Encrypt each bigram separately.
+	# 1. If the letters are on the same row, replace each with the letter immediately to the right (wraparound).
+	# 2. If the letters are in the same column, replace each with the letter immediately below (wraparound).
+	# 3. Else, replace with the letter in the same column as one letter and same row as the other.
+	#	(Make a box out of the two letters, the missing corners are your new letters)
+	#	Replace each letter with the corner letter in the **same row** as it.	
+	# All previous used registers are now unnecessary. Reset $s0-$s3 and $t0 to 0.
+	move $t0, $zero
+	move $s0, $zero # Unnecessary since we set $s0 to an address in the next step.
+	move $s1, $zero
+	move $s2, $zero
+	move $s3, $zero
+	# Set $s0 to the base address for edittedPhrase.
+	la $s0, editedPhrase
+findRowColumn:
+
 exit:
 	li $v0, 10
 	syscall
