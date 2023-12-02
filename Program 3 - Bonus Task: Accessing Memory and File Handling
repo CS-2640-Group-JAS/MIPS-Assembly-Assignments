@@ -1,7 +1,89 @@
 # Anastasia Davis, Srivalli Kakumani, and Jessica Pinto
-# CS2640.01
-# December 12, 2023
-.data
+# CS 2640.01
+# December 2, 2023
+# Write a program in Assembly that creates a file and writes to it (please use .txt files).
+# Ideas for things to include:
+#	get file name and content from user input
+#	use macros
+#	have a menu
+#	error handling
 
+# A macro for printing a string.
+.macro printString(%string)
+	li $v0, 4
+	la $a0, %string
+	syscall
+.end_macro
+
+# A macro for reading a string given a buffer and length of the input.
+.macro readString(%buffer, %length)
+	li $v0, 8
+	la $a0, %buffer
+	li $a1, %length
+	syscall
+.end_macro
+
+.data
+namePrompt: .asciiz "Please enter the name of the file you wish to create (up to 100 chars): "
+contentPrompt: .asciiz "Please enter the content of the file (up to 500 chars): "
+errorMessage: .asciiz "An error has occurred with trying to create your file. Please try again."
+completionMessage: .asciiz "Your file has been created successfully!"
+fileName: .space 101
+fileContent: .space 501
+testFile: .asciiz "hello.txt"
 .text
 main:
+	# Print the prompt for the file name.
+	printString(namePrompt)
+	# Read the user's input.
+	readString(fileName, 100)
+	# Print the prompt for the file content.
+	printString(contentPrompt)
+	# Read the user's input.
+	readString(fileContent, 500)
+	
+	
+	# The next segment of code is used to clean the file name of a character (10, NL line feed, new line)
+	# that prevents the creation of a new file from a buffer. It is taken from 
+	# https://stackoverflow.com/questions/2575867/reading-the-file-name-from-user-input-in-mips-assembly
+	li $t0, 0       #loop counter
+cleanFileName:
+	lb $t3, fileName($t0)
+	beq $t3, 0, continue
+	bne $t3, 10, increment
+	sb $zero, fileName($t0)
+increment:
+	addi $t0, $t0, 1
+	j cleanFileName
+continue:
+	# Code following this comment is created by us.
+	
+	
+	# Open the user-defined file name.
+	li $v0, 13
+	la $a0, fileName
+	li $a1, 1	# Create and write to a user-defined file.
+	li $a2, 0	# Ignored
+	syscall
+	move $s0, $v0	# Store the file descriptor in $s0.
+	# If the file descriptor is negative, an error has occurred.
+	blt $s0, 0, error
+	# Write to the user-defined file.
+	li $v0, 15
+	move $a0, $s0	# Move the file descriptor.
+	la $a1, fileContent
+	li $a2, 501
+	syscall
+	# Close the user-defined file.
+	li $v0, 16
+	move $a0, $s0	# Move the file descriptor.
+	syscall
+	# Print the completion message.
+	printString(completionMessage)
+	j exit
+error:
+	printString(errorMessage)
+exit:
+	# Exit the program
+	li $v0, 10
+	syscall
