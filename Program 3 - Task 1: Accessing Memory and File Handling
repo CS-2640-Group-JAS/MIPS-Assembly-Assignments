@@ -1,7 +1,85 @@
 # Anastasia Davis, Srivalli Kakumani, and Jessica Pinto
-# CS2640.01
-# December 12, 2023
+# CS 2640.01
+# December 2, 2023
+
+# A macro for printing a character with a newline added.
+.macro printChar(%char)
+	li $v0, 11
+	li $a0, %char
+	syscall
+	li $a0, '\n'
+	syscall
+.end_macro
+
+# A macro for printing a string.
+.macro printString(%string)
+	li $v0, 4
+	la $a0, %string
+	syscall
+.end_macro
+
+# A macro for printing an int.
+.macro printInt(%int)
+	li $v0, 1
+	la $a0, (%int)
+	syscall
+.end_macro
+
 .data
+array: .word 32, 56, 78, 66, 88, 90, 93, 100, 101, 82
+grade: .asciiz "The grade for "
+is: .asciiz " is: "
+exitMessage: .asciiz "Brought to you by Anastasia Davis, Srivalli Kakumani, and Jessica Pinto\nThe program will now exit."
+extraCredit: .asciiz "A with Extra Credit\n"
 
 .text
 main:
+	# Move the base address of the array into $s0.
+	la $s0, array
+	# Initialize the loop counter, $s1.
+	move $s1, $zero
+loop:
+	# Check for the end of the loop.
+	beq $s1, 10, exit
+	# Print the grade message.
+	printString(grade)
+	# Load the grade into $s2.
+	lw $s2, ($s0)
+	# Increment the loop counter and add 4 to the base address.
+	addi $s1, $s1, 1
+	addi $s0, $s0, 4
+	# Print the grade.
+	printInt($s2)
+	# Print the rest of the grade message.
+	printString(is)
+	# Check the grade.
+	bgt $s2, 100, extra
+	bge $s2, 90, A
+	bge $s2, 80, B
+	bge $s2, 70, C
+	bge $s2, 60, D
+	j F
+extra:
+	printString(extraCredit)
+	j loop
+A:
+	printChar('A')
+	j loop
+B:
+	printChar('B')
+	j loop
+C:
+	printChar('C')
+	j loop
+D:
+	printChar('D')
+	j loop
+F:
+	printChar('F')
+	j loop
+exit:
+	# Print the exit message.
+	printString(exitMessage)
+	# Exit the program.
+	li $v0, 10
+	syscall
