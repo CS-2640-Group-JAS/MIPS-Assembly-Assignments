@@ -17,11 +17,12 @@ row2: .byte 'I', 'R', 'E', 'X', 'M'
 row3: .byte 'B', 'C', 'D', 'G', 'H'
 row4: .byte 'K', 'N', 'O', 'Q', 'S'
 row5: .byte 'T', 'U', 'V', 'W', 'Z'
+table: .word row1, row2, row3, row4, row5
 
 phrase: .asciiz "Doubling letters ... since every year rings silent."
 testPhrase: .asciiz "`1234567890-=qwertyuiop[]\asdfghjkl;'zxcvbnm,./~!@#$%^&*()_+QWERTYUIOP{}|ASDFGHJKL:ZXCVBNM<>?"
 editedPhrase: .space 500
-
+encryptedPhrase: .space 500
 .text
 main:
 	# Load the base address of phrase into $s0.
@@ -89,7 +90,7 @@ printLoop:
 	# Increment editedphrase counter.
 	addi $s3, $s3, 1
 	# Check for end of string.
-	beq $t1, 0, encrypt
+	beq $t1, 0, endPrint
 	# Else print the character.
 	la $a0, ($t1)
 	syscall
@@ -101,23 +102,76 @@ printLoop:
 	li $a0, ' '
 	syscall
 	j printLoop
-encrypt: 
+endPrint:
 	# Encrypt each bigram separately.
-	# 1. If the letters are on the same row, replace each with the letter immediately to the right (wraparound).
-	# 2. If the letters are in the same column, replace each with the letter immediately below (wraparound).
-	# 3. Else, replace with the letter in the same column as one letter and same row as the other.
+	# 1. (Jerold) If the letters are on the same row, replace each with the letter immediately to the right (wraparound).
+	# 2. (Srivalli) If the letters are in the same column, replace each with the letter immediately below (wraparound).
+	# 3. (Ana & Jess) Else, replace with the letter in the same column as one letter and same row as the other.
 	#	(Make a box out of the two letters, the missing corners are your new letters)
-	#	Replace each letter with the corner letter in the **same row** as it.	
+	#	Replace each letter with the corner letter in the **same row** as it.
 	# All previous used registers are now unnecessary. Reset $s0-$s3 and $t0 to 0.
-	move $t0, $zero
+	move $t0, $zero # Unnecessary
 	move $s0, $zero # Unnecessary since we set $s0 to an address in the next step.
-	move $s1, $zero
-	move $s2, $zero
+	move $s1, $zero # Unnecessary
+	move $s2, $zero # Unnecessary
 	move $s3, $zero
 	# Set $s0 to the base address for edittedPhrase.
 	la $s0, editedPhrase
-findRowColumn:
-
+	# $t2 will designate the first or second letter of the bigram.
+	li $t2, 1
+encrypt:	
+	la $s1, table	# Put the address of the table into $s1.
+	# $s3 is the counter for the row, $s4 is the counter for the column.
+	move $s3, $zero
+	move $s4, $zero
+	# Put the letter of editedPhrase into $t0.
+	lb $t0, ($s0)
+findRow:
+	# Put the corresponding row into $s2.
+	lw $s2, ($s1)
+	# Move to the next row by incrementing row
+	addi $s1, $s1, 4
+	addi $s3, $s3, 1
+	# Reset column counter.
+	move $s4, $zero
+findColumn:
+	# Put the letter from the table into $t1.
+	lb $t1, ($s2)
+	# Check if they are equal
+	beq $t0, $t1, store
+	# If they are not equal increment column and repeat.
+	addi $s4, $s4, 1
+	addi $s2, $s2 1
+	# Check if we have reached the end of the column
+	beq $s4, 5, findRow
+	j findColumn
+store:
+	subi $s3, $s3, 1
+	# Jump to afterFind once the second letter of the bigram has been found.
+	beq $t2, 2 afterFind
+	# Store the row and column where the letter was found.
+	move $s5, $s3
+	move $s6, $s4
+	# Switch to the second letter of the bigram.
+	li $t2, 2
+	# Increment to the next letter of edited phrase.
+	addi $s0, $s0, 1
+	j encrypt
+afterFind:
+	# Print check.
+	# Second row
+	li $v0, 1
+	la $a0, ($s3)
+	syscall
+	# Second column
+	la $a0, ($s4)
+	syscall
+	# First row
+	la $a0, ($s5)
+	syscall
+	# First column
+	la $a0, ($s6)
+	syscall
 exit:
 	li $v0, 10
 	syscall
