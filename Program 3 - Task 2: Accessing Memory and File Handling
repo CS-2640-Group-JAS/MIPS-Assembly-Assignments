@@ -2,6 +2,32 @@
 # CS2640.01
 # December 12, 2023
 .data
-
+inputFilename: .asciiz "practiceFile.txt" 
+outputFilename: .asciiz "copy of testfile.txt"
+buffer: .space 101
 .text
 main:
+	# open the created file 
+	li $v0, 13 
+	la $a0, inputFilename
+	li $a1, 0
+	li $a2, 0 
+	syscall 
+	move $s0, $v0 
+	
+	# read from the opened file 
+	li $v0, 14 
+	move $a0, $s0 
+	la $a1, buffer 
+	li $a2, 100
+	syscall 
+	
+	# print out buffer 
+	li $v0, 4 
+	la $a0, buffer
+	syscall 
+	
+	# exit the program 
+	li $v0, 10 
+	syscall 
+	
