@@ -1,6 +1,6 @@
 # Anastasia Davis, Srivalli Kakumani, and Jessica Pinto
 # CS2640.01
-# December 12, 2023
+# December 2, 2023
 
 .data
 filename_prompt: .asciiz "Enter the file name: "
@@ -10,39 +10,57 @@ filename:       .space 64     # File name storage
 
 .text
 main:
-    li $v0, 4                   # Print string
-    la $a0, filename_prompt     # Load address of filename prompt
-    syscall
+	li $v0, 4                   # Print string
+	la $a0, filename_prompt     # Load address of filename prompt
+	syscall
 
-    li $v0, 8                   # Read string
-    la $a0, filename            # Load address of filename buffer
-    li $a1, 64                  # Maximum number of characters to read
-    syscall
+	li $v0, 8                   # Read string
+	la $a0, filename            # Load address of filename buffer
+	li $a1, 64                  # Maximum number of characters to read
+	syscall
+	
+	
+	# The next segment of code is used to clean the file name of a character (10, NL line feed, new line)
+	# that prevents the creation of a new file from a buffer. It is taken from 
+	# https://stackoverflow.com/questions/2575867/reading-the-file-name-from-user-input-in-mips-assembly
+	li $t0, 0       #loop counter
+cleanFileName:
+	lb $t3, filename($t0)
+	beq $t3, 0, continue
+	bne $t3, 10, increment
+	sb $zero, filename($t0)
+increment:
+	addi $t0, $t0, 1
+	j cleanFileName
+continue:
+	# Code following this comment is created by us.
+	
 
-    li $v0, 13                  # Open file for writing (append mode)
-    la $a0, filename            # Load address of filename
-    li $a1, 1                   # Append mode (1 for append, 0 for overwrite)
-    li $a2, 0                   # File permission (ignored in some environments)
-    syscall
-    move $s0, $v0               # Store file descriptor
+	li $v0, 13                  # Open file for writing (append mode)
+	la $a0, filename            # Load address of filename
+	li $a1, 9                   # Append mode
+	li $a2, 0                   # File permission (ignored in some environments)
+	syscall
+	move $s0, $v0               # Store file descriptor
 
-    li $v0, 4                   # Print string
-    la $a0, content_prompt      # Load address of content prompt
-    syscall
+	li $v0, 4                   # Print string
+	la $a0, content_prompt      # Load address of content prompt
+	syscall
 
-    li $v0, 8                   # Read string
-    la $a0, buffer              # Load address of buffer
-    li $a1, 128                 # Maximum number of characters to read
-    syscall
+	li $v0, 8                   # Read string
+	la $a0, buffer              # Load address of buffer
+	li $a1, 128                 # Maximum number of characters to read
+	syscall
 
-    move $a0, $s0               # File descriptor
-    li $v0, 15                  # Write to file
-    la $a1, buffer              # Buffer to write
-    syscall
+	move $a0, $s0               # File descriptor
+	li $v0, 15                  # Write to file
+	la $a1, buffer              # Buffer to write
+	li $a2, 128		     # Maximum number of characters to write.
+	syscall
 
-    li $v0, 16                  # Close file
-    move $a0, $s0               # File descriptor
-    syscall
+	li $v0, 16                  # Close file
+	move $a0, $s0               # File descriptor
+	syscall
 
-    li $v0, 10                  # Exit program
-    syscall
+	li $v0, 10                  # Exit program
+	syscall
