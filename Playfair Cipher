@@ -48,16 +48,19 @@ checkString:
 	blt $t1, 65, checkString
 	# Check for lowercase character (make uppercase).
 	bgt $t1, 90, makeUpperCase
-	j duplicateCheck
+	j jCheck
 makeUpperCase:
 	# Check for non-letters below/above lowercase asciis (skip).
 	blt $t1, 97, checkString
 	bgt $t1, 122, checkString
-	# Make uppercase
+	# Make uppercase.
 	subi, $t1, $t1, 32
-	j duplicateCheck
+jCheck:
+	# Special case for 'J', convert to 'I'.
+	bne $t1, 74, duplicateCheck
+	li $t1, 73
 duplicateCheck:
-	# Check for non-duplicate letters
+	# Check for non-duplicate letters.
 	bne $t1, $t2, addChar
 	# Check if editedPhrase counter is even (skip adding 'X') or odd (add 'X' to separate duplicates)
 	# The result in $t3 will be 1 if odd and 0 if even.
@@ -146,6 +149,7 @@ findColumn:
 	beq $s4, 5, findRow
 	j findColumn
 store:
+	# Subtract 1 from row number to keep it consistent with column number.
 	subi $s3, $s3, 1
 	# Jump to afterFind once the second letter of the bigram has been found.
 	beq $t2, 2 afterFind
