@@ -1,0 +1,86 @@
+# Anastasia Davis, Srivalli Kakumani, and Jessica Pinto
+# CS 2640.01
+# December 5, 2023
+# Write a program in Assembly that reverses the elements of the given array. 
+# Use any registers and instructions as necessary.
+.macro printChar(%char)
+	li $v0, 11
+	li $a0, %char
+	syscall
+.end_macro
+.macro printString(%string)
+	li $v0, 4
+	la $a0, %string
+	syscall
+.end_macro
+.macro printInt(%int)
+	li $v0, 1
+	move $a0, %int
+	syscall
+.end_macro
+.data
+array: .byte 5, 4, 3, 2, 1
+reversedArray: .space 5
+originalArray: .asciiz "Array elements are: "
+newArray: .asciiz "New array is: "
+.text
+main:
+	# Store the address of the first element in the array in $s0.
+	la $s0, array
+	# Initialize $s1 as array counter.
+	move $s1, $zero
+	# Print the first message.
+	printString(originalArray)
+pushLoop:
+	# Take number from the array.
+	lb $t0, ($s0)
+	# Load the number in the array into the stack.
+	sb $t0, ($sp)
+	# Print the number.
+	printInt($t0)
+	# Print a space.
+	printChar(' ')
+	# Move the stack pointer.
+	subi $sp, $sp, 1
+	# Move the array pointer.
+	addi $s0, $s0, 1
+	# Increment the counter.
+	addi $s1, $s1, 1
+	# Check for exit condition.
+	beq $s1, 5, afterLoop
+	# Loop
+	j pushLoop
+afterLoop:
+	# Store the address of the reversed array in $s0.
+	la $s0, reversedArray
+	# Reinitialize $s1 as array counter.
+	move $s1, $zero
+	# Print a newline character.
+	printChar('\n')
+	# Print the second message.
+	printString(newArray)
+	# Move the stack pointer to point to the top element.
+	addi $sp, $sp, 1
+popLoop:
+	# Take the number from the stack.
+	lb $t0, ($sp)
+	# Load the number from the stack into the array.
+	sb $t0, ($s0)
+	# Print the number.
+	printInt($t0)
+	# Print a space.
+	printChar(' ')
+	# Move the stack pointer.
+	addi $sp, $sp, 1
+	# Move the array pointer.
+	addi $s0, $s0, 1
+	# Increment the counter.
+	addi $s1, $s1, 1
+	# Check for exit condition.
+	beq $s1, 5, exit
+	# Loop
+	j popLoop
+exit:
+	# Exit the program.
+	li $v0, 10
+	syscall
