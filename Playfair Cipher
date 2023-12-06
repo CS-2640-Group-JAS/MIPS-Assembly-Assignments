@@ -1,42 +1,23 @@
 # Anastasia Davis, Srivalli Kakumani, Jerold Manansala, and Jessica Pinto
 # CS 2640.01
-# 15 November, 2023
-.macro addToString(%char)
-	# Put the offset for editedPhrase into $t0.
-	add $t0, $s1, $s3
-	sb %char, ($t0)
-	# Increment editedPhrase counter.
-	addi $s3, $s3, 1
-	# Move char to previous character for editedPhrase.
-	move $t2, %char
-.end_macro
-.macro addBigram
-	# Put the address of the table into $s1.
-	la $s1, table
-	# Put the corresponding row into $s2.
-	mul $s5, $s5, 4
-	add $s1, $s1, $s5
-	lw $s2, ($s1)
-	# Put the letter into $t1, and then encrypted phrase.
-	add $s2, $s2, $s6
-	lb $t1, ($s2)
-	sb $t1, ($t4)
-	# Increment encryptedPhrase to next byte.
-	addi $t4, $t4, 1
-	# Put the address of the table into $s1.
-	la $s1, table
-	# Put the corresponding row into $s2.
-	mul $s3, $s3, 4
-	add $s1, $s1, $s3
-	lw $s2, ($s1)
-	# Put the letter into $t1, and then encrypted phrase.
-	add $s2, $s2, $s4
-	lb $t1, ($s2)
-	sb $t1, ($t4)
-	# Increment encryptedPhrase to next byte.
-	addi $t4, $t4, 1
-.end_macro
+# December 5, 2023
+
+# Sets of macros used in this program.
+.include "basicMacros.asm"
+.include "playfairMacros.asm"
+
 .data
+# Prompts and Messages
+menuPrompt: .asciiz "\n\nThis is a program that contains the Playfair cipher!\nPlease enter 'E' for encode or 'D' for decode: "
+phrasePrompt: .asciiz "\n\nEnter your string now: "
+editedMessage: .asciiz "\nYour edited phrase is: "
+encodeMessage: .asciiz "\nYour encoded phrase is: "
+decodeMessage: .asciiz "\nYour decoded phrase is: "
+repeatMessage: .asciiz "\n\nWould you like to encode/decode another phrase?\nPlease enter 'Y' for yes or 'N' for no: "
+errorMessage: .asciiz "\n\nSorry! That wasn't one of our options. Please try again!"
+exitMessage: .asciiz "\n\nThe program will now exit."
+
+# Cipher Table
 row1: .byte 'P', 'L', 'A', 'Y', 'F'
 row2: .byte 'I', 'R', 'E', 'X', 'M'
 row3: .byte 'B', 'C', 'D', 'G', 'H'
@@ -44,12 +25,92 @@ row4: .byte 'K', 'N', 'O', 'Q', 'S'
 row5: .byte 'T', 'U', 'V', 'W', 'Z'
 table: .word row1, row2, row3, row4, row5
 
-phrase: .asciiz "Doubling letters ... since every year rings silent."
-testPhrase: .asciiz "`1234567890-=qwertyuiop[]\asdfghjkl;'zxcvbnm,./~!@#$%^&*()_+QWERTYUIOP{}|ASDFGHJKL:ZXCVBNM<>?"
+# Phrases throughout encryption.
+phrase: .space 500
 editedPhrase: .space 500
 encryptedPhrase: .space 500
+
 .text
+# User interaction code (menus, prompts, etc.), as well as jumps to logic code.
 main:
+	# Print the menu prompt.
+	printString(menuPrompt)
+	# Read the user's response.
+	readChar
+	# Move the user's response to $t0.
+	move $t0, $v0
+	# If the user's input is 'E' or 'e', jump to encodeLogic.
+	beq $t0, 69, encode
+	beq $t0, 101, encode
+	# If the user's input is 'D' or 'd', jump to decodeLogic.
+	beq $t0, 68, decode
+	beq $t0, 100, decode
+	# Else the user's input is indecipherable, jump to error.
+	j error
+encode:
+	# Format the string
+	jal formatString
+	# Insert logic here.
+	# Print the edited string.
+	printString(editedMessage)
+	jal printEdited
+	# Find the rows and columns of each bigram and encode them.
+	# Warning! Will loop automatically!
+	jal beforeFind	# This jump loops through and encodes the entire phrase!
+	# Print the encoded string.
+	printString(encodeMessage)
+	jal printEncrypted
+	# Jump to repeat, ending encode.
+	j repeat
+decode:
+	# Format the string
+	jal formatString
+	# Insert logic here.
+	# Print the edited string.
+	printString(editedMessage)
+	jal printEdited
+	# Find the rows and columns of each bigram and encode them.
+	# Warning! Will loop automatically!
+	jal beforeFind	# This jump loops through and encodes the entire phrase!
+	# Print the encoded string.
+	printString(encodeMessage)
+	jal printEncrypted
+	# Jump to repeat, ending decode.
+	j repeat
+repeat:
+	# Print the repeat prompt.
+	printString(repeatMessage)
+	# Read the user's response.
+	readChar
+	# Move the user's response to $t0.
+	move $t0, $v0
+	# If the user's input is 'Y' or 'y', jump to main.
+	beq $t0, 89, main
+	beq $t0, 121, main
+	# If the user's input is 'N' or 'n', jump to exit.
+	beq $t0, 78, exit
+	beq $t0, 110, exit
+	# Else the user's input is indecipherable, jump to error.
+	j error
+error:
+	# Print the error message.
+	printString(errorMessage)
+	# Jump back to the main menu.
+	j main
+exit:
+	# Print the exit message.
+	printString(exitMessage)
+	# Exit the program
+	li $v0, 10
+	syscall
+	
+	
+# This code is for formatting the string so that it can be encrypted properly.
+formatString:
+	# Print the phrase prompt.
+	printString(phrasePrompt)
+	# Read the user's response.
+	readString(phrase)
 	# Load the base address of phrase into $s0.
 	la $s0, phrase
 	# Load the base address of editedPhrase into $s1.
@@ -87,9 +148,9 @@ jCheck:
 duplicateCheck:
 	# Check for non-duplicate letters.
 	bne $t1, $t2, addChar
-	# Check if editedPhrase counter is even (skip adding 'X') or odd (add 'X' to separate duplicates)
+	# Check if editedPhrase counter is even (skip adding 'X') or odd (add 'X' to separate duplicates).
 	# The result in $t3 will be 1 if odd and 0 if even.
-	andi $t3, $s3, 0x0001
+	andi $t3, $s3, 1
 	beq $t3, 0, addChar
 	li $t3, 'X'
 	addToString($t3)
@@ -97,7 +158,7 @@ addChar:
 	addToString($t1)
 	j checkString
 checkNumChars:
-	# Check if editedPhrase counter is even (skip adding 'X') or odd (add 'X' to make even bigrams)
+	# Check if editedPhrase counter is even (skip adding 'X') or odd (add 'X' to make even bigrams).
 	# The result in $t3 will be 1 if odd and 0 if even.
 	andi $t3, $s3, 0x0001
 	beq $t3, 0, afterCheckString
@@ -106,7 +167,18 @@ checkNumChars:
 afterCheckString:
 	# Add the null terminator.
 	addToString($t1)
-	# Reinitialize the counter for editedPhrase.
+	# Return to encode/decode.
+	jr $ra
+	
+	
+# This code will print every character of the given phrase (either editedPhrase or encryptedPhrase) in pairs.
+printEdited:
+	la $s1, editedPhrase
+	j print
+printEncrypted:
+	la $s1, encryptedPhrase
+print:
+	# Initialize the counter for editedPhrase.
 	move $s3, $zero
 	# Syscall for printing a character.
 	li $v0, 11
@@ -122,29 +194,29 @@ printLoop:
 	# Else print the character.
 	la $a0, ($t1)
 	syscall
-	# Check if editedPhrase counter is odd (don't add ' ') or even (add ' ')
+	# Check if editedPhrase counter is odd (don't add ' ') or even (add ' ').
 	# The result in $t3 will be 1 if odd and 0 if even.
 	andi $t3, $s3, 0x0001
 	beq $t3, 1, printLoop
 	# Print space.
 	li $a0, ' '
 	syscall
+	# Repeat
 	j printLoop
 endPrint:
-	# Encrypt each bigram separately.
-	# 1. (Jerold) If the letters are on the same row, replace each with the letter immediately to the right (wraparound).
-	# 2. (Srivalli) If the letters are in the same column, replace each with the letter immediately below (wraparound).
-	# 3. (Ana & Jess) Else, replace with the letter in the same column as one letter and same row as the other.
-	#	(Make a box out of the two letters, the missing corners are your new letters)
-	#	Replace each letter with the corner letter in the **same row** as it.
-	# All previous used registers are now unnecessary. We can now resuse $s0-$s3 and $t0.
-	# Set $s0 to the base address for edittedPhrase.
+	# Return to encode/decode.
+	jr $ra
+	
+	
+# This code finds the rows and columns for all of the bigrams in editedPhrase.
+beforeFind:
+	# Set $s0 to the base address for editedPhrase.
 	la $s0, editedPhrase
 	# $t2 will designate the first or second letter of the bigram.
 	li $t2, 1
 	# $t4 is the address of encryptedPhrase.
 	la $t4, encryptedPhrase
-encrypt:	
+findRowsAndColumns:	
 	la $s1, table	# Put the address of the table into $s1.
 	# $s3 is the counter for the row, $s4 is the counter for the column.
 	move $s3, $zero
@@ -152,7 +224,7 @@ encrypt:
 	# Put the letter of editedPhrase into $t0.
 	lb $t0, ($s0)
 	# Check for null terminator character.
-	beq $t0, 0, afterEncryption
+	beq $t0, 0, afterFind
 findRow:
 	# Put the corresponding row into $s2.
 	lw $s2, ($s1)
@@ -178,61 +250,39 @@ store:
 	# Increment to the next letter of edited phrase.
 	addi $s0, $s0, 1
 	# Jump to afterFind once the second letter of the bigram has been found.
-	beq $t2, 2 afterFind
+	beq $t2, 2 encodeCases
 	# Store the row and column where the letter was found.
 	move $s5, $s3
 	move $s6, $s4
 	# Switch to the second letter of the bigram.
 	li $t2, 2
-	j encrypt
+	j findRowsAndColumns
 afterFind:
+	# Store the null terminator character in encryptedPhrase.
+	sb $t0, ($t4)
+	# Return to encode.
+	jr $ra
+
+
+# This code contains the cases used to encode bigrams.
+encodeCases:
 	# If the rows are equal, encode using first rule, if columns are equal, encode using second rule.
-	beq $s3, $s5, case1
-	beq $s4, $s6, case2
+	beq $s3, $s5, encodeCase1
+	beq $s4, $s6, encodeCase2
 	# Else, encode using third rule.
-	j case3
-case1:	# Jerold
-case2:	# Srivalli
-case3:	# Jess & Ana
+	j encodeCase3
+encodeCase1:	# Jerold
+	j afterCase
+encodeCase2:	# Srivalli
+	j afterCase
+encodeCase3:	# Jess & Ana
 	# Swap the columns to get the column values for the new letters.
 	move $s7, $s6
 	move $s6, $s4
 	move $s4, $s7
+afterCase:
 	# Add the two letters to encryptedPhrase
 	addBigram
 	# Reset to first letter of bigram and repeat.
 	li $t2, 1
-	j encrypt
-afterEncryption:
-	# Put the address of encryptedPhrase into $s1
-	la $s1, encryptedPhrase
-	# Reinitialize the counter for encryptedPhrase.
-	move $s3, $zero
-	# Syscall for printing a character.
-	li $v0, 11
-	# Add a newline character.
-	li $a0, '\n'
-	syscall
-printLoop2:
-	# Put the offset for encryptedPhrase into $t0.
-	add $t0, $s1, $s3
-	# Load the appropriate character of encryptedPhrase into $t1.
-	lb $t1, ($t0)
-	# Increment encryptedphrase counter.
-	addi $s3, $s3, 1
-	# Check for end of string.
-	beq $t1, 0, exit
-	# Else print the character.
-	la $a0, ($t1)
-	syscall
-	# Check if encryptedPhrase counter is odd (don't add ' ') or even (add ' ')
-	# The result in $t3 will be 1 if odd and 0 if even.
-	andi $t3, $s3, 0x0001
-	beq $t3, 1, printLoop2
-	# Print space.
-	li $a0, ' '
-	syscall
-	j printLoop2
-exit:
-	li $v0, 10
-	syscall
+	j findRowsAndColumns
