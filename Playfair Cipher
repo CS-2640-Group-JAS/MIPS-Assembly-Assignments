@@ -48,6 +48,8 @@ main:
 	# Else the user's input is indecipherable, jump to error.
 	j error
 encode:
+	# Use $t5 to store 0 for encoding, 1 for decoding.
+	move $t5, $zero
 	# Format the string
 	jal formatString
 	# Insert logic here.
@@ -63,6 +65,8 @@ encode:
 	# Jump to repeat, ending encode.
 	j repeat
 decode:
+	# Use $t5 to store 0 for encoding, 1 for decoding.
+	li $t5, 1
 	# Format the string
 	jal formatString
 	# Insert logic here.
@@ -249,8 +253,8 @@ store:
 	subi $s3, $s3, 1
 	# Increment to the next letter of edited phrase.
 	addi $s0, $s0, 1
-	# Jump to afterFind once the second letter of the bigram has been found.
-	beq $t2, 2 encodeCases
+	# Jump to cases once the second letter of the bigram has been found.
+	beq $t2, 2 cases
 	# Store the row and column where the letter was found.
 	move $s5, $s3
 	move $s6, $s4
@@ -265,21 +269,40 @@ afterFind:
 
 
 # This code contains the cases used to encode bigrams.
+# 1. (Jerold) If the letters are on the same row, replace each with the letter immediately to the right (wraparound).
+# 2. (Srivalli) If the letters are in the same column, replace each with the letter immediately below (wraparound).
+# 3. (Ana & Jess) Else, replace with the letter in the same column as one letter and same row as the other.
+#	(Make a box out of the two letters, the missing corners are your new letters)
+#	Replace each letter with the corner letter in the **same row** as it.
+cases:
+	# Go to encodeCases if 0 or decodeCases if 1.
+	beq $t5, 1, decodeCases
 encodeCases:
 	# If the rows are equal, encode using first rule, if columns are equal, encode using second rule.
 	beq $s3, $s5, encodeCase1
 	beq $s4, $s6, encodeCase2
 	# Else, encode using third rule.
-	j encodeCase3
+	j case3
 encodeCase1:	# Jerold
 	j afterCase
 encodeCase2:	# Srivalli
 	j afterCase
-encodeCase3:	# Jess & Ana
+decodeCases:
+	# If the rows are equal, decode using first rule, if columns are equal, decode using second rule.
+	beq $s3, $s5, decodeCase1
+	beq $s4, $s6, decodeCase2
+	# Else, decode using third rule.
+	j case3
+decodeCase1:
+	j afterCase
+decodeCase2:
+	j afterCase
+case3:	# Jess & Ana
 	# Swap the columns to get the column values for the new letters.
 	move $s7, $s6
 	move $s6, $s4
 	move $s4, $s7
+	j afterCase
 afterCase:
 	# Add the two letters to encryptedPhrase
 	addBigram
