@@ -61,7 +61,7 @@ encode:
 	jal beforeFind	# This jump loops through and encodes the entire phrase!
 	# Print the encoded string.
 	printString(encodeMessage)
-	jal printEncrypted
+	printString(encryptedPhrase)
 	# Jump to repeat, ending encode.
 	j repeat
 decode:
@@ -77,8 +77,8 @@ decode:
 	# Warning! Will loop automatically!
 	jal beforeFind	# This jump loops through and encodes the entire phrase!
 	# Print the encoded string.
-	printString(encodeMessage)
-	jal printEncrypted
+	printString(decodeMessage)
+	printString(encryptedPhrase)
 	# Jump to repeat, ending decode.
 	j repeat
 repeat:
@@ -274,6 +274,8 @@ afterFind:
 # 3. (Ana & Jess) Else, replace with the letter in the same column as one letter and same row as the other.
 #	(Make a box out of the two letters, the missing corners are your new letters)
 #	Replace each letter with the corner letter in the **same row** as it.
+# $s5 and $s6 are the first letter's row and column, respectively.
+# $s3 and $s4 are the second letter's row and column, respectively.
 cases:
 	# Go to encodeCases if 0 or decodeCases if 1.
 	beq $t5, 1, decodeCases
@@ -294,8 +296,34 @@ decodeCases:
 	# Else, decode using third rule.
 	j case3
 decodeCase1:
+	# Subtract 1 from the column to get the letter to the left.
+	subi $s4, $s4, 1
+	# Check for a negative value.
+	bge $s4, 0, decodeCase1Part2
+	# Wrap around.
+	li $s4, 4
+decodeCase1Part2:
+	# Subtract 1 from the column to get the letter to the left.
+	subi $s6, $s6, 1
+	# Check for a negative value.
+	bge $s6, 0, afterCase
+	# Wrap around.
+	li $s6, 4
 	j afterCase
 decodeCase2:
+	# Subtract 1 from the row to get the letter above.
+	subi $s3, $s3, 1
+	# Check for a negative value.
+	bge $s3, 0, decodeCase2Part2
+	# Wrap around.
+	li $s3, 4
+decodeCase2Part2:
+	# Subtract 1 from the row to get the letter above.
+	subi $s5, $s5, 1
+	# Check for a negative value.
+	bge $s5, 0, afterCase
+	# Wrap around.
+	li $s5, 4
 	j afterCase
 case3:	# Jess & Ana
 	# Swap the columns to get the column values for the new letters.
