@@ -254,7 +254,7 @@ store:
 	# Increment to the next letter of edited phrase.
 	addi $s0, $s0, 1
 	# Jump to cases once the second letter of the bigram has been found.
-	beq $t2, 2 cases
+	beq $t2, 2, cases
 	# Store the row and column where the letter was found.
 	move $s5, $s3
 	move $s6, $s4
