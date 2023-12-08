@@ -314,9 +314,9 @@ encodeCase2:	# Srivalli
     j afterCase     
 # If first character's row is greater than 4, wrap around. 
 wrapRow1: 
-    li $s3, 0
-    beq $s5, $s5, wrapRow2 
-    j afterCase
+    li $s3, 1   # Set row of the first letter to 1 (wrap around)
+    j wrapRow2  # Jump to wrapRow2 for the second letter
+
 # If second character's row is greater than 4, wrap around. 
 wrapRow2: 
     li $s5, 0 
