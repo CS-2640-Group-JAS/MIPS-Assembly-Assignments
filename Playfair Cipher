@@ -286,9 +286,42 @@ encodeCases:
 	# Else, encode using third rule.
 	j case3
 encodeCase1:	# Jerold
+    # Since rows are equal, each character of bigram becomes the character in the next column or wraps around.
+    addi $s4, $s4, 1
+    addi $s6, $s6, 1 
+    beq $s4, 5, wrapColumn1
+    beq $s6, $s6, wrapColumn2 
+    # Jump to end of cases. 
+    j afterCase     
+# If first character's column is greater than 4, wrap around. 
+wrapColumn1: 
+    li $s4, 0
+    beq $s6, $s6, wrapColumn2 
+    j afterCase 
+# If second character's column is greater than 4, wrap around. 
+wrapColumn2: 
+    li $s6, 0 
+    j afterCase
 	j afterCase
 encodeCase2:	# Srivalli
-	j afterCase
+    # Since columns are equal, each character of bigrams becomes the character in the next row or wraps around. 
+    addi $s3, $s3, 1
+    addi $s5, $s5, 1 
+    # If either character is in the last row, wrap it around to the top row. 
+    beq $s3, 5, wrapRow1
+    beq $s5, 5, wrapRow2 
+    # Jump to end of cases. 
+    j afterCase     
+# If first character's row is greater than 4, wrap around. 
+wrapRow1: 
+    li $s3, 0
+    beq $s5, $s5, wrapRow2 
+    j afterCase
+# If second character's row is greater than 4, wrap around. 
+wrapRow2: 
+    li $s5, 0 
+    j afterCase
+
 decodeCases:
 	# If the rows are equal, decode using first rule, if columns are equal, decode using second rule.
 	beq $s3, $s5, decodeCase1
