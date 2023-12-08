@@ -46,7 +46,8 @@ main:
 	beq $t0, 68, decode
 	beq $t0, 100, decode
 	# Else the user's input is indecipherable, jump to error.
-	j error
+	jal error
+	j main
 encode:
 	# Use $t5 to store 0 for encoding, 1 for decoding.
 	move $t5, $zero
@@ -95,12 +96,13 @@ repeat:
 	beq $t0, 78, exit
 	beq $t0, 110, exit
 	# Else the user's input is indecipherable, jump to error.
-	j error
+	jal error
+	j repeat
 error:
 	# Print the error message.
 	printString(errorMessage)
 	# Jump back to the main menu.
-	j main
+	jr $ra
 exit:
 	# Print the exit message.
 	printString(exitMessage)
@@ -244,7 +246,7 @@ findColumn:
 	beq $t0, $t1, store
 	# If they are not equal increment column and repeat.
 	addi $s4, $s4, 1
-	addi $s2, $s2 1
+	addi $s2, $s2, 1
 	# Check if we have reached the end of the column
 	beq $s4, 5, findRow
 	j findColumn
@@ -285,25 +287,24 @@ encodeCases:
 	beq $s4, $s6, encodeCase2
 	# Else, encode using third rule.
 	j case3
-encodeCase1:	# Jerold
+encodeCase1:
     # Since rows are equal, each character of bigram becomes the character in the next column or wraps around.
     addi $s4, $s4, 1
     addi $s6, $s6, 1 
     beq $s4, 5, wrapColumn1
-    beq $s6, $s6, wrapColumn2 
+    beq $s6, 5, wrapColumn2 
     # Jump to end of cases. 
     j afterCase     
 # If first character's column is greater than 4, wrap around. 
 wrapColumn1: 
     li $s4, 0
-    beq $s6, $s6, wrapColumn2 
+    beq $s6, 5, wrapColumn2 
     j afterCase 
 # If second character's column is greater than 4, wrap around. 
 wrapColumn2: 
     li $s6, 0 
     j afterCase
-	j afterCase
-encodeCase2:	# Srivalli
+encodeCase2:
     # Since columns are equal, each character of bigrams becomes the character in the next row or wraps around. 
     addi $s3, $s3, 1
     addi $s5, $s5, 1 
@@ -314,14 +315,13 @@ encodeCase2:	# Srivalli
     j afterCase     
 # If first character's row is greater than 4, wrap around. 
 wrapRow1: 
-    li $s3, 1   # Set row of the first letter to 1 (wrap around)
-    j wrapRow2  # Jump to wrapRow2 for the second letter
-
+    li $s3, 0   # Set row of the first letter to 0 (wrap around)
+    beq $s5, 5 wrapRow2  # Jump to wrapRow2 for the second letter
+    j afterCase
 # If second character's row is greater than 4, wrap around. 
 wrapRow2: 
     li $s5, 0 
     j afterCase
-
 decodeCases:
 	# If the rows are equal, decode using first rule, if columns are equal, decode using second rule.
 	beq $s3, $s5, decodeCase1
@@ -358,7 +358,7 @@ decodeCase2Part2:
 	# Wrap around.
 	li $s5, 4
 	j afterCase
-case3:	# Jess & Ana
+case3:
 	# Swap the columns to get the column values for the new letters.
 	move $s7, $s6
 	move $s6, $s4
