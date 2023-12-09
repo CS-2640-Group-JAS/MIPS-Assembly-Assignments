@@ -13,6 +13,7 @@ phrasePrompt: .asciiz "\n\nEnter your string now: "
 editedMessage: .asciiz "\nYour edited phrase is: "
 encodeMessage: .asciiz "\nYour encoded phrase is: "
 decodeMessage: .asciiz "\nYour decoded phrase is: "
+noXMessage: .asciiz "\n\nWould you like to see the decoded phrase with the letter 'X' removed?\nPlease enter 'Y' for yes or 'N' for no: "
 repeatMessage: .asciiz "\n\nWould you like to encode/decode another phrase?\nPlease enter 'Y' for yes or 'N' for no: "
 errorMessage: .asciiz "\n\nSorry! That wasn't one of our options. Please try again!"
 exitMessage: .asciiz "\n\nThe program will now exit."
@@ -77,11 +78,25 @@ decode:
 	# Find the rows and columns of each bigram and encode them.
 	# Warning! Will loop automatically!
 	jal beforeFind	# This jump loops through and encodes the entire phrase!
-	# Print the encoded string.
+	# Print the decoded string.
 	printString(decodeMessage)
 	printString(encryptedPhrase)
-	# Jump to repeat, ending decode.
-	j repeat
+decodeNoX:
+	# Print the No 'X' prompt.
+	printString(noXMessage)
+	# Read the user's response.
+	readChar
+	# Move the user's response to $t0.
+	move $t0, $v0
+	# If the user's input is 'Y' or 'y', jump to printNoX.
+	beq $t0, 89, printNoX
+	beq $t0, 121, printNoX
+	# If the user's input is 'N' or 'n', jump to repeat.
+	beq $t0, 78, repeat
+	beq $t0, 110, repeat
+	# Else the user's input is indecipherable, jump to error.
+	jal error
+	j decodeNoX
 repeat:
 	# Print the repeat prompt.
 	printString(repeatMessage)
@@ -184,23 +199,23 @@ printEdited:
 printEncrypted:
 	la $s1, encryptedPhrase
 print:
-	# Initialize the counter for editedPhrase.
+	# Initialize the counter for phrase.
 	move $s3, $zero
 	# Syscall for printing a character.
 	li $v0, 11
 printLoop:
-	# Put the offset for editedPhrase into $t0.
+	# Put the offset for the phrase into $t0.
 	add $t0, $s1, $s3
-	# Load the appropriate character of editedPhrase into $t1.
+	# Load the appropriate character of the phrase into $t1.
 	lb $t1, ($t0)
-	# Increment editedphrase counter.
+	# Increment phrase counter.
 	addi $s3, $s3, 1
 	# Check for end of string.
 	beq $t1, 0, endPrint
 	# Else print the character.
 	la $a0, ($t1)
 	syscall
-	# Check if editedPhrase counter is odd (don't add ' ') or even (add ' ').
+	# Check if the phrase counter is odd (don't add ' ') or even (add ' ').
 	# The result in $t3 will be 1 if odd and 0 if even.
 	andi $t3, $s3, 0x0001
 	beq $t3, 1, printLoop
@@ -212,6 +227,30 @@ printLoop:
 endPrint:
 	# Return to encode/decode.
 	jr $ra
+	
+	
+# This code will print every character of encryptedPhrase without 'X'.
+printNoX:
+	# Print the message for the decoded string.
+	printString(decodeMessage)
+	# Put the address of encryptedPhrase into $s1.
+	la $s1, encryptedPhrase
+	# Syscall for printing a character.
+	li $v0, 11
+printNoXLoop:
+	# Load the appropriate character of editedPhrase into $t0.
+	lb $t0, ($s1)
+	# Increment to the next character of phrase.
+	addi $s1, $s1, 1
+	# Check for end of string. If yes, jump to repeat.
+	beq $t0, 0, repeat
+	# Check for the letter 'X'. If yes, skip the letter.
+	beq $t0, 'X', printNoXLoop
+	# Else print the character.
+	la $a0, ($t0)
+	syscall
+	# Repeat
+	j printNoXLoop
 	
 	
 # This code finds the rows and columns for all of the bigrams in editedPhrase.
